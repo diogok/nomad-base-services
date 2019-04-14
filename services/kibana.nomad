@@ -10,7 +10,7 @@ job "kibana" {
       driver = "docker"
 
       env {
-        ELASTICSEARCH_URL="http://elasticsearch.weave.local"
+        ELASTICSEARCH_URL="http://elasticsearch.weave.local:9200"
       }
 
       config {

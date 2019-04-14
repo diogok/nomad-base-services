@@ -10,11 +10,12 @@ job "fluentbit" {
       driver = "docker"
 
       env {
-        ES_HOST="elasticsearch.weave.local:9200"
+        ES_HOST="elasticsearch.weave.local"
+        ES_PORT="9200"
       }
 
       config {
-        image = "diogok/fluentbit:v0.0.3"
+        image = "diogok/fluentbit:v0.0.4"
 
         network_mode="weave"
         hostname="fluentbit.weave.local"
@@ -23,6 +24,7 @@ job "fluentbit" {
         port_map {
           json=5432
           syslog=9514
+          syslog2=9515
           fluent=24224
           monitor=9600
         }
@@ -40,6 +42,9 @@ job "fluentbit" {
           }
           port "syslog" { 
             static=9514
+          }
+          port "syslog2" { 
+            static=9515
           }
           port "monitor" {}
         }
