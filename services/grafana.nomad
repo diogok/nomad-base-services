@@ -40,6 +40,14 @@ job "grafana" {
 
         network_mode="weave"
         dns_servers=["172.17.0.1"]
+
+        logging {
+          type = "syslog"
+          config {
+            syslog-address = "udp://127.0.0.1:9515"
+            tag = "your_tag"
+          }
+        }
       }
 
       user="root"
