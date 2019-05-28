@@ -1,5 +1,5 @@
-nomad_version=0.9.0
-consul_version=1.4.4
+nomad_version=0.9.1
+consul_version=1.5.0
 levant_version=0.2.7
 
 os=$(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -39,7 +39,6 @@ install-consul:
 	chmod +x consul
 	mkdir -p bin
 	mv consul bin/consul
-	sudo cp bin/consul /usr/local/bin/consul
 
 install-nomad:
 	curl https://releases.hashicorp.com/nomad/$(nomad_version)/nomad_$(nomad_version)_$(os)_$(arch).zip -o nomad_$(nomad_version)_$(os)_$(arch).zip
