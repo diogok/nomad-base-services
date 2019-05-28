@@ -29,8 +29,8 @@ job "prometheus" {
         }
 
         volumes =[
-           "data:/prometheus"
-          ,"prometheus:/etc/prometheus"
+           "${NOMAD_ALLOC_DIR}/data:/prometheus"
+          ,"${NOMAD_ALLOC_DIR}/prometheus:/etc/prometheus"
         ]
 
         args= ["--storage.tsdb.path","/prometheus","--config.file","/etc/prometheus/prometheus.yml"]
