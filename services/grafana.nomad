@@ -27,15 +27,16 @@ job "grafana" {
         GF_AUTH_ANONYMOUS_ORG_NAME="Main Org."
         GF_AUTH_ANONYMOUS_ORG_ROLE="Editor"
         GF_DATABASE_URL="mysql://grafana:freakoutnow@grafana-mysql.weave.local:3306/grafana"
+        PROMETHEUS_HOST="prometheus.weave.local"
+        PROMETHEUS_PORT="9090"
       }
 
       config {
         image = "grafana/grafana:6.2.1"
 
         volumes =[
-           "${NOMAD_ALLOC_DIR}/grafana_data:/var/lib/grafana"
-          ,"${NOMAD_ALLOC_DIR}/grafana_datasources:/etc/grafana/provisioning/datasources"
-          ,"${NOMAD_ALLOC_DIR}/grafana_dashboards:/etc/grafana/provisioning/dashboards"
+           "grafana_data:/var/lib/grafana"
+          ,"grafana_provisioning:/etc/grafana/provisioning"
         ]
 
         port_map {
@@ -47,8 +48,11 @@ job "grafana" {
       }
 
       artifact {
-        source = "https://gist.githubusercontent.com/diogok/d1fbfb2f44715234eecb5fec2919c065/raw/c2ab2fda7d55722e4f23a46ab247742eb5ecb2ce/prometheus.yml"
-        destination = "grafana_datasources"
+        source= "git::https://github.com/diogok/grafana-provisioning"
+        destination = "grafana_provisioning"
+        options {
+          ref = "v0.0.1"
+        }
       }
 
       user="root"
