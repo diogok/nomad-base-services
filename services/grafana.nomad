@@ -30,9 +30,13 @@ job "grafana" {
       }
 
       config {
-        image = "grafana/grafana:6.0.2"
+        image = "grafana/grafana:6.2.1"
 
-        volumes =["${NOMAD_ALLOC_DIR}/grafana_data:/var/lib/grafana"]
+        volumes =[
+           "${NOMAD_ALLOC_DIR}/grafana_data:/var/lib/grafana"
+          ,"${NOMAD_ALLOC_DIR}/grafana_datasources:/etc/grafana/provisioning/datasources"
+          ,"${NOMAD_ALLOC_DIR}/grafana_dashboards:/etc/grafana/provisioning/dashboards"
+        ]
 
         port_map {
           http=3000
@@ -40,14 +44,11 @@ job "grafana" {
 
         network_mode="weave"
         dns_servers=["172.17.0.1"]
+      }
 
-        logging {
-          type = "syslog"
-          config {
-            syslog-address = "udp://127.0.0.1:9515"
-            tag = "your_tag"
-          }
-        }
+      artifact {
+        source = "https://gist.githubusercontent.com/diogok/d1fbfb2f44715234eecb5fec2919c065/raw/c2ab2fda7d55722e4f23a46ab247742eb5ecb2ce/prometheus.yml"
+        destination = "grafana_datasources"
       }
 
       user="root"
