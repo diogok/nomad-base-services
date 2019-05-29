@@ -34,7 +34,7 @@ job "traefik" {
            "--consulCatalog",
            "--consulCatalog.watch=true",
            "--consulCatalog.prefix=traefik",
-           "--consulCatalog.endpoint=10.2.2.1:8500",
+           "--consulCatalog.endpoint=host.weave.local:8500",
            "--consulCatalog.exposedByDefault=false",
            "--metrics",
            "--metrics.prometheus",
