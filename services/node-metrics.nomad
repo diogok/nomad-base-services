@@ -1,4 +1,4 @@
-job "node-exporter" {
+job "node-metrics" {
   datacenters = ["dc1"]
 
   type="system"
@@ -9,10 +9,10 @@ job "node-exporter" {
     auto_revert = true
   }
 
-  group "nodee-xporter" {
+  group "node-metrics" {
     count = 1
-
-    task "node-exporter" {
+    
+    task "node-metrics" {
       driver = "docker"
 
       config {
@@ -33,14 +33,14 @@ job "node-exporter" {
       }
 
       service {
-        name = "nodee-xporter"
+        name = "node-exporter"
         port = "web"
         address_mode="host"
 
         tags=["prometheus"]
 
         check {
-          name     = "nodeexporter_alive"
+          name     = "node-exporter_alive"
           type     = "tcp"
           interval = "20s"
           timeout  = "2s"

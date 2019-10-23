@@ -13,20 +13,41 @@ job "traefik" {
   group "traefik" {
     count = 1
 
+
+    network {
+      mode= "bridge"
+
+      port "http" {
+        to=80
+        static=80
+      }
+
+      port "admin" {
+        to=8080
+        static=8080
+      }
+    }
+
+    service {
+      name = "traefik"
+      port = "http"
+
+      connect {
+        sidecar_service {}
+      }
+    }
+
+    service {
+      name = "traefik-admin"
+      port = "admin"
+      tags=["prometheus"]
+    }
+
     task "traefik" {
       driver = "docker"
 
       config {
         image = "traefik:v1.7.10-alpine"
-
-        port_map {
-          proxy=80
-          admin=8080
-        }
-
-        network_mode="weave"
-        dns_servers=["172.17.0.1"]
-        extra_hosts=["host:10.2.2.1"]
 
         command="traefik"
         args=[
@@ -34,7 +55,7 @@ job "traefik" {
            "--consulCatalog",
            "--consulCatalog.watch=true",
            "--consulCatalog.prefix=traefik",
-           "--consulCatalog.endpoint=host.weave.local:8500",
+           "--consulCatalog.endpoint=${attr.unique.network.ip-address}:8500",
            "--consulCatalog.exposedByDefault=false",
            "--metrics",
            "--metrics.prometheus",
@@ -49,37 +70,6 @@ job "traefik" {
       resources {
         cpu    = 150
         memory = 128
-        network {
-          port "proxy" {
-            static=80
-          }
-          port "admin" { 
-            static=8080
-          }
-        }
-      }
-
-      service {
-        name = "traefik-proxy"
-        port = "proxy"
-      }
-
-      service {
-        name = "traefik"
-        port = "admin"
-        address_mode="driver"
-
-        tags=["prometheus"]
-
-        check {
-          name     = "traefik-admin-alive"
-          type     = "http"
-          interval = "20s"
-          timeout  = "2s"
-          path     = "/metrics"
-          port     = "admin"
-          address_mode="host"
-        }
       }
     }
   }

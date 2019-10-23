@@ -9,8 +9,21 @@ job "grafana-mysql" {
     auto_revert = true
   }
 
-  group "grafana" {
+  group "db" {
     count = 1
+
+    network {
+      mode= "bridge"
+    }
+
+    service {
+      name = "grafana-mysql"
+      port = "3306"
+
+      connect {
+        sidecar_service {}
+      }
+    }
 
     ephemeral_disk {
       sticky = true
@@ -31,16 +44,7 @@ job "grafana-mysql" {
       config {
         image = "mariadb/server:10.3.13"
 
-        volumes =["${NOMAD_ALLOC_DIR}/mysql_data_x1:/var/lib/mysql"]
-
-        port_map {
-          mysql=3306
-        }
-
-        network_mode="weave"
-        hostname="grafana-mysql.weave.local"
-
-        #args=["--default-authentication-plugin=mysql_native_password"]
+        volumes =["${NOMAD_ALLOC_DIR}/mysql_data:/var/lib/mysql"]
       }
 
       user="root"
@@ -53,24 +57,6 @@ job "grafana-mysql" {
       resources {
         cpu    = 100
         memory = 512
-        network {
-          port "mysql" {}
-        }
-      }
-
-      service {
-        name = "grafana-mysql"
-        port = "mysql"
-        address_mode="driver"
-
-        check {
-          name     = "grafana-mysql-alive"
-          type     = "tcp"
-          port     = "mysql"
-          address_mode="host"
-          interval="10s"
-          timeout="2s"
-        }
       }
     } 
   }

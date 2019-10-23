@@ -22,7 +22,7 @@ job "prometheus" {
 
     service {
       name = "prometheus"
-      port = "http"
+      port = "9090"
 
       connect {
         sidecar_service {}
