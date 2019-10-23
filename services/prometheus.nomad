@@ -12,65 +12,60 @@ job "prometheus" {
       size = 10240
     }
 
+    network {
+      mode= "bridge"
+      port "http" {
+        to = 9090
+      }
+    }
+
+    service {
+      name = "prometheus"
+      port = "9090"
+      
+      connect {
+        sidecar_service {}
+      }
+    }
+
     task "prometheus" {
       driver = "docker"
       user="root"
 
       config {
-        image = "prom/prometheus:v2.8.1"
-
-        network_mode="weave"
-        hostname="prometheus.weave.local"
-        dns_servers=["172.17.0.1"]
-        extra_hosts=["host:10.2.3.1"]
-
-        port_map {
-          ui=9090
-        }
-
-        volumes =[
-           "data:/prometheus"
-          ,"prometheus:/etc/prometheus"
-        ]
-
-        args= ["--storage.tsdb.path","/prometheus","--config.file","/etc/prometheus/prometheus.yml"]
-      }
-
-      artifact {
-        source = "https://gist.githubusercontent.com/diogok/a6b2501aefc5d951c1ca2112d0ac6f05/raw/8e2cd36d4fe357c4fec4324240e6b489734087fb/prometheus.yml"
-        destination = "prometheus"
+        image = "prom/prometheus:v2.13.1"
+        args= ["--storage.tsdb.path","/local/data","--config.file","/local/prometheus.yml"]
       }
 
       resources {
         cpu    = 500
-        memory = 1536
-
-        network {
-          port "ui" {}
-        }
+        memory = 2048
       }
 
-      service {
-        name = "prometheus"
-        port = "ui"
-        address_mode="driver"
+      template {
+        destination   = "local/prometheus.yml"
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
 
-        tags = [
-           "prometheus"
-          ,"traefik.enable=true"
-          ,"traefik.frontend.rule=PathPrefixStrip:/prometheus/"
-        ]
-
-        check {
-          name     = "prometheus-alive"
-          port     = "ui"
-          type     = "http"
-          interval = "10s"
-          timeout  = "2s"
-          path     = "/"
-        }
+        data = <<EOF
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: 'services'
+    consul_sd_configs:
+      - server: '{{env "attr.unique.network.ip-address"}}:8500'
+    relabel_configs:
+      - source_labels: [__meta_consul_tags]
+        regex: .*,prometheus,.*
+        action: keep
+      - source_labels: [__meta_consul_service]
+        target_label: job
+      - source_labels: [__meta_consul_tags]
+        regex: .*,prometheus.metrics_path=([^,]+),.*
+        replacement: '${1}'
+        target_label: __metrics_path__
+        EOF
       }
     }
   }
 }
-
