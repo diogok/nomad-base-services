@@ -4,16 +4,22 @@ job "elasticsearch-metrics" {
   type="service"
 
   group "metrics" {
-    count = 1
+    count = 2
 
     network {
       mode= "bridge"
+
+      port "http" {
+        to=9108
+      }
     }
 
     service {
       name = "elasticsearch-metrics"
-      port = "9108"
+      port = "http"
 
+      tags = ["prometheus"]
+ 
       connect {
         sidecar_service {
           proxy {

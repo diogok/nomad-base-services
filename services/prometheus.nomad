@@ -14,15 +14,16 @@ job "prometheus" {
 
     network {
       mode= "bridge"
+
       port "http" {
-        to = 9090
+        to=9090
       }
     }
 
     service {
       name = "prometheus"
-      port = "9090"
-      
+      port = "http"
+
       connect {
         sidecar_service {}
       }
@@ -58,6 +59,9 @@ scrape_configs:
       - source_labels: [__meta_consul_tags]
         regex: .*,prometheus,.*
         action: keep
+      - source_labels: [__meta_consul_service]
+        regex: .*-sidecar-proxy
+        action: drop
       - source_labels: [__meta_consul_service]
         target_label: job
       - source_labels: [__meta_consul_tags]
