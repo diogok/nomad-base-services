@@ -15,15 +15,15 @@ ifeq ($(arch),x86_64)
 endif
 
 start:
-	consul agent -dev > consul.log 2>&1 &
+	consul agent -dev -client 0.0.0.0 > consul.log 2>&1 &
 	sudo nomad agent -dev-connect > nomad.log 2>&1 &
 	tail -f consul.log nomad.log
 
 start-consul:
-	consul agent -dev
+	consul agent -dev -client 0.0.0.0
 	
 start-nomad:
-	sudo nomad agent -dev-connect
+	sudo nomad agent -dev-connect -bind 0.0.0.0
 
 install-consul:
 	curl https://releases.hashicorp.com/consul/$(consul_version)/consul_$(consul_version)_$(os)_$(arch).zip -o consul_$(consul_version)_$(os)_$(arch).zip
