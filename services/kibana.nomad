@@ -6,52 +6,48 @@ job "kibana" {
   group "kibana" {
     count = 1
 
+    network {
+      mode= "bridge"
+
+      port "http" {
+        static = 5601
+        to = 5601
+      }
+    }
+
+    service {
+      name = "kibana"
+      port = "http"
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "elasticsearch"
+              local_bind_port  = 9200
+            }
+            config {
+              bind_address = "0.0.0.0"
+            }
+          }
+        }
+      }
+    }
+
     task "kibana" {
       driver = "docker"
 
       env {
-        ELASTICSEARCH_URL="http://elasticsearch.weave.local:9200"
+        ELASTICSEARCH_HOSTS="http://${NOMAD_UPSTREAM_ADDR_elasticsearch}"
       }
 
       config {
-        image = "docker.elastic.co/kibana/kibana-oss:6.3.1"
-
-        network_mode="weave"
-        dns_servers=["172.17.0.1"]
-
-        port_map {
-          ui=5601
-        }
+        image = "docker.elastic.co/kibana/kibana-oss:6.7.1"
       }
 
       resources {
         cpu    = 100
         memory = 256
-
-        network {
-          port "ui" {}
-        }
-      }
-
-      service {
-        name = "kibana"
-        port = "ui"
-        address_mode="driver"
-
-        tags =[
-           "traefik.enable=true"
-          ,"traefik.frontend.rule=Host:kibana.local"
-        ]
-
-        check {
-          name     = "kibana-logs-alive"
-          address_mode="host"
-          port     = "ui"
-          type     = "http"
-          interval = "10s"
-          timeout  = "2s"
-          path     = "/"
-        }
       }
     }
   }

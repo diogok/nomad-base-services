@@ -6,21 +6,33 @@ job "elasticsearch-metrics" {
   group "metrics" {
     count = 1
 
+    network {
+      mode= "bridge"
+    }
+
+    service {
+      name = "elasticsearch-metrics"
+      port = "9108"
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "elasticsearch"
+              local_bind_port  = 9200
+            }
+          }
+        }
+      }
+    }
+
     task "metrics" {
       driver = "docker"
 
       config {
         image = "justwatch/elasticsearch_exporter:1.0.2"
-
-        port_map {
-          metrics=9108
-        }
-
-        network_mode="weave"
-        dns_servers=["172.17.0.1"]
-
         args=[
-           "-es.uri","http://elasticsearch.weave.local:9200"
+           "-es.uri","http://${NOMAD_UPSTREAM_ADDR_elasticsearch}"
           ,"-es.all"
           ,"-es.indices"
         ]
@@ -29,29 +41,7 @@ job "elasticsearch-metrics" {
       resources {
         cpu    = 50
         memory = 56
-        network {
-          port "metrics" { }
-        }
-      }
-
-      service {
-        name = "es-metrics"
-        port = "metrics"
-        address_mode="driver"
-        tags=["prometheus"]
-
-        check {
-          name     = "es-metrics-alive"
-          type     = "http"
-          interval = "20s"
-          timeout  = "2s"
-          port     = "metrics"
-          path     = "/metrics"
-          address_mode="host"
-        }
       }
     }
   }
 }
-
-
