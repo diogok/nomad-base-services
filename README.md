@@ -7,7 +7,6 @@ This is supposed to be used with my [systemd-nomad](https://github.com/diogok/sy
 ## Features
 
 - [Consul]() for service discovery
-- [Weave]() for service mesh
 - [Nomad]() for orchestration
 - [Elasticsearch]() for logs and metrics data
 - [Fluentbit](), from fluentd, for logging gathering
@@ -20,12 +19,13 @@ This is supposed to be used with my [systemd-nomad](https://github.com/diogok/sy
 - [Jaeger]() for open tracing
 - [Node exporter]() for machine metrics
 - [Elasticsearch export]() for ES metrics
+- [RabbitMQ]() For queueing
 
 Runing elasticsearch (or any db) in the orchestrated cluster is not ideal and it is done here only for demonstration.
 
 ## Running
 
-To install consul, nomad, levant (a tool to easier deploy to nomad) and weave:
+To install consul, nomad and cni plugins:
 
 ```
 make install
@@ -37,15 +37,11 @@ To start all in dev mode:
 make start
 ```
 
-To run all services:
-
-```
-make deploy-all
-```
-
 To run a single service:
 
-make deploy JOB=services/service_name.nomad
+```
+nomad run JOB=services/service_name.nomad
+```
 
 ## Acessing
 
@@ -53,7 +49,7 @@ Important links:
 
 - Consul at [http://localhost:8500]
 - Nomad at [http://localhost:4646]
-- Weave at [http://localhost:4040]
+- Kibana at [http://localhost:5601]
 - Traefik admin at  [http://localhost:8080]
 - Grafana at [http://localhost/grafana]
 - Jaeger at  [http://localhost/jaeger]
