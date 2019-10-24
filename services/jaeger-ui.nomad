@@ -6,55 +6,54 @@ job "jaeger-ui" {
   group "jaeger-ui" {
     count = 1
 
+    network {
+      mode= "bridge"
+      port "http" {
+        to=16686
+      }
+    }
+
+    service {
+      name = "jaeger-ui-connect"
+ 
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "elasticsearch"
+              local_bind_port  = 9200
+            }
+          }
+        }
+      }
+    }
+
+    service {
+      name = "jaeger-ui"
+      port = "http"
+
+      tags =[
+         "traefik.enable=true"
+        ,"traefik.frontend.rule=PathPrefix:/jaeger/"
+      ]
+    }
+
     task "jaeger-ui" {
       driver = "docker"
 
       env {
         SPAN_STORAGE_TYPE="elasticsearch"
-        ES_SERVER_URLS="http://elasticsearch.weave.local:9200/"
+        ES_SERVER_URLS="http://${NOMAD_UPSTREAM_ADDR_elasticsearch}"
         QUERY_BASE_PATH="/jaeger"
       }
 
       config {
-        image = "jaegertracing/jaeger-query:1.11"
-
-        network_mode="weave"
-        hostname="jaeger-collector.weave.local"
-        #dns_search_domains=".weave.local."
-        dns_servers=["172.17.0.1"]
-
-        port_map = {
-          http=16686
-        }
+        image = "jaegertracing/jaeger-query:1.14"
       }
 
       resources {
         cpu    = 100
         memory = 256
-
-        network {
-          port "http" {}
-        }
-      }
-
-      service {
-        name = "jaeger-ui"
-        port = "http"
-        address_mode="driver"
-
-        tags =[
-           "traefik.enable=true"
-          ,"traefik.frontend.rule=PathPrefix:/jaeger/"
-        ]
-
-        check {
-          name     = "jaeger-ui-alive"
-          port     = "http"
-          type     = "http"
-          interval = "10s"
-          timeout  = "2s"
-          path     = "/"
-        }
       }
     }
   }

@@ -61,8 +61,8 @@ job "traefik" {
            "--metrics.prometheus",
            "--tracing",
            "--tracing.backend=jaeger",
-           "--tracing.jaeger.samplingServerURL=http://jaeger-agent.weave.local:5778/sampling",
-           "--tracing.jaeger.localAgentHostPort=jaeger-agent.weave.local:6831",
+           "--tracing.jaeger.samplingServerURL=http://${attr.unique.network.ip-address}:5778/sampling",
+           "--tracing.jaeger.localAgentHostPort=${attr.unique.network.ip-address}:6831",
            "--accesslog.filepath="
         ]
       }

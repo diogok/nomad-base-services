@@ -11,18 +11,35 @@ job "jaeger-deps" {
   group "jaeger-deps" {
     count = 1
 
+    network {
+      mode= "bridge"
+    }
+
+    service {
+      name = "jaeger-deps"
+ 
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "elasticsearch"
+              local_bind_port  = 9200
+            }
+          }
+        }
+      }
+    }
+
     task "jaeger-deps" {
       driver = "docker"
 
       env {
         STORAGE="elasticsearch"
-        ES_NODES="http://elasticsearch.weave.local:9200"
+        ES_NODES="http://${NOMAD_UPSTREAM_ADDR_elasticsearch}"
       }
 
       config {
         image = "jaegertracing/spark-dependencies:latest"
-        network_mode="weave"
-        dns_servers=["172.17.0.1"]
       }
 
       resources {

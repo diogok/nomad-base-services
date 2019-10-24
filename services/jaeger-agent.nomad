@@ -6,54 +6,50 @@ job "jaeger-agent" {
   group "jaeger" {
     count = 1
 
+    network {
+      mode="bridge"
+
+      port "http" {
+        to=5778
+        static=5778
+      }
+
+      port "thrift" {
+        to=6831
+        static=6831
+      }
+    }
+
+    service {
+      name = "jaeger-agent-metrics"
+      port = "http"
+
+      tags = ["prometheus"]
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "jaeger-collector-tchannel"
+              local_bind_port  = 14267
+            }
+          }
+        }
+      }
+    }
+
     task "jaeger-agent" {
       driver = "docker"
 
       config {
-        image = "jaegertracing/jaeger-agent:1.11"
+        image = "jaegertracing/jaeger-agent:1.14"
 
-        args = ["--reporter.tchannel.host-port","jaeger-collector.weave.local:14267"]
-
-        network_mode="weave"
-        hostname="jaeger-agent.weave.local"
-        dns_servers=["172.17.0.1"]
-
-        port_map = {
-          zipkin=5775
-          thriftc=6831
-          thriftb=6832
-          http=5778
-        }
+        args = ["--reporter.tchannel.host-port","${NOMAD_UPSTREAM_ADDR_jaeger_collector_tchannel}"]
       }
 
       resources {
         cpu    = 100
         memory = 56
-
-        network {
-          port "grpc" {}
-          port "zipkin" {}
-          port "thriftc" {}
-          port "thriftb" {}
-          port "http" {}
-        }
-      }
-
-      service {
-        name = "jaeger-agent-http"
-        port = "http"
-        address_mode="driver"
-
-        tags=["prometheus"]
-
-        check {
-          name     = "jaeger-agent-http"
-          port     = "http"
-          type     = "http"
-          interval = "10s"
-          timeout  = "2s"
-          path     = "/metrics"
-        }
       }
     }
   }

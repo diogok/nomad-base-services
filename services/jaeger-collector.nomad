@@ -1,58 +1,57 @@
 job "jaeger-collector" {
   datacenters = ["dc1"]
 
-  type = "system"
+  type = "service"
 
   group "jaeger-collector" {
     count = 1
+
+    network {
+      mode= "bridge"
+
+      port "http" {
+        to=14268
+      }
+    }
+
+    service {
+      name = "jaeger-collector-metrics"
+      port = "http"
+
+      tags = ["prometheus"]
+    }
+
+    service {
+      name = "jaeger-collector-tchannel"
+      port = "14267"
+ 
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "elasticsearch"
+              local_bind_port  = 9200
+            }
+          }
+        }
+      }
+    }
 
     task "jaeger-collector" {
       driver = "docker"
 
       env {
         SPAN_STORAGE_TYPE="elasticsearch"
-        ES_SERVER_URLS="http://elasticsearch.weave.local:9200/"
+        ES_SERVER_URLS="http://${NOMAD_UPSTREAM_ADDR_elasticsearch}/"
       }
 
       config {
-        image = "jaegertracing/jaeger-collector:1.11"
-
-        network_mode="weave"
-        hostname="jaeger-collector.weave.local"
-        #dns_search_domains=".weave.local."
-        dns_servers=["172.17.0.1"]
-
-        port_map = {
-          tchannel=14267
-          http=14268
-        }
+        image = "jaegertracing/jaeger-collector:1.14"
       }
 
       resources {
         cpu    = 100
         memory = 56
-
-        network {
-          port "tchannel" { }
-          port "http" { }
-        }
-      }
-
-      service {
-        name = "jaeger-collector-http"
-        port = "http"
-        address_mode="driver"
-
-        tags=["prometheus"]
-
-        check {
-          name     = "jaeger-collector-http"
-          port     = "http"
-          type     = "http"
-          interval = "10s"
-          timeout  = "2s"
-          path     = "/metrics"
-        }
       }
     }
   }
