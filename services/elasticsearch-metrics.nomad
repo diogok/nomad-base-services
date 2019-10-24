@@ -4,7 +4,7 @@ job "elasticsearch-metrics" {
   type="service"
 
   group "metrics" {
-    count = 2
+    count = 1
 
     network {
       mode= "bridge"
