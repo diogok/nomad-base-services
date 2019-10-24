@@ -11,6 +11,25 @@ job "logrotate" {
   group "logrotate" {
     count = 1
 
+    network {
+      mode= "bridge"
+    }
+
+    service {
+      name = "logrotate"
+ 
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "elasticsearch"
+              local_bind_port  = 9200
+            }
+          }
+        }
+      }
+    }
+
     task "logrotate" {
       driver = "docker"
 
@@ -21,7 +40,7 @@ job "logrotate" {
 
         network_mode="weave"
         args=[
-          "--host","elasticsearch.weave.local"
+          "--host","${NOMAD_UPSTREAM_ADDR_elasticsearch}"
           "delete_indices",
           "--filter_list" ,
           "[{\"filtertype\":\"age\",\"direction\":\"older\",\"source\":\"creation_date\",\"unit\":\"days\",\"unit_count\":30},{\"filtertype\":\"pattern\",\"kind\":\"prefix\",\"value\":\"logs-\"}]"
